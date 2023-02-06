@@ -1,12 +1,14 @@
+import torch
+from torch import nn
+
 from cs285.infrastructure import pytorch_util as ptu
 from .base_exploration_model import BaseExplorationModel
-import torch.optim as optim
-from torch import nn
-import torch
+
 
 def init_method_1(model):
     model.weight.data.uniform_()
     model.bias.data.uniform_()
+
 
 def init_method_2(model):
     model.weight.data.normal_()
@@ -25,11 +27,44 @@ class RNDModel(nn.Module, BaseExplorationModel):
         # <DONE>: Create two neural networks:
         # 1) f, the random function we are trying to learn
         # 2) f_hat, the function we are using to learn f
+        self.model_f = ptu.build_mlp(input_size=self.ob_dim,
+                                     output_size=self.output_size,
+                                     n_layers=self.n_layers,
+                                     size=self.size)
+
+        self.model_f_hat = ptu.build_mlp(input_size=self.ob_dim,
+                                         output_size=self.output_size,
+                                         n_layers=self.n_layers,
+                                         size=self.size)
+
+        for module in self.model_f.modules():
+            if isinstance(module, nn.Linear):
+                init_method_1(module)
+
+        for module in self.model_f_hat.modules():
+            if isinstance(module, nn.Linear):
+                init_method_2(module)
+
+        self.optimizer = self.optimizer_spec.constructor(
+            self.model_f_hat.parameters(),
+            **self.optimizer_spec.optim_kwargs
+        )
+
+        self.loss = nn.L1Loss()
 
     def forward(self, ob_no):
         # <DONE>: Get the prediction error for ob_no
         # HINT: Remember to detach the output of self.f!
-        pass
+
+        # ob_no = ptu.from_numpy(ob_no)
+
+        pred_f = self.model_f(ob_no).detach()
+        pred_f_hat = self.model_f_hat(ob_no)
+
+        #prediction_error = self.loss(pred_f, pred_f_hat)
+        prediction_error = (pred_f- pred_f_hat).abs().mean(dim=-1)
+
+        return prediction_error
 
     def forward_np(self, ob_no):
         ob_no = ptu.from_numpy(ob_no)
@@ -39,4 +74,14 @@ class RNDModel(nn.Module, BaseExplorationModel):
     def update(self, ob_no):
         # <DONE>: Update f_hat using ob_no
         # Hint: Take the mean prediction error across the batch
-        pass
+
+        prediction_error = self(ob_no)
+        prediction_error = prediction_error.mean()
+
+        self.optimizer.zero_grad()
+        prediction_error.backward()
+        self.optimizer.step()
+
+        return {
+            'Training Loss': ptu.to_numpy(prediction_error),
+        }

@@ -37,26 +37,31 @@ class CQLCritic(BaseCritic):
             self.optimizer,
             self.optimizer_spec.learning_rate_schedule,
         )
-        self.loss = nn.MSELoss()
+
         self.q_net.to(ptu.device)
         self.q_net_target.to(ptu.device)
         self.cql_alpha = hparams['cql_alpha']
 
+        self.loss = nn.MSELoss()
+
     def dqn_loss(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
+        raise Exception("Not implemented")
+
         """ Implement DQN Loss """
         qa_t_values = self.q_net(ob_no)
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
 
         with torch.no_grad():
-            qa_tp_values = self.q_net(next_ob_no)
-            y = reward_n + qa_tp_values.max(dim=-1)
+            qa_tp_values = self.q_net_target(next_ob_no)
+            y = reward_n + self.gamma * qa_tp_values.max(dim=-1)[0] * (1 - terminal_n)
 
-        loss = self.loss(q_t_values - y)
+        loss = self.loss(q_t_values, y.detach())
 
         return loss, qa_t_values, q_t_values
 
-
     def update(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
+        raise Exception("Not implemented")
+
         """
             Update the parameters of the critic.
             let sum_of_path_lengths be the sum of the lengths of the paths sampled from
@@ -79,27 +84,31 @@ class CQLCritic(BaseCritic):
         terminal_n = ptu.from_numpy(terminal_n)
 
         # Compute the DQN Loss 
-        loss, qa_t_values, q_t_values = self.dqn_loss(
+        dqn_loss, qa_t_values, q_t_values = self.dqn_loss(
             ob_no, ac_na, next_ob_no, reward_n, terminal_n
-            )
-        
+        )
+
         # CQL Implementation
         # TODO: Implement CQL as described in the pdf and paper
         # Hint: After calculating cql_loss, augment the loss appropriately
-        q_t_logsumexp = qa_t_values.exp().sum().log()
-        cql_loss = loss + self.cql_alpha * (q_t_logsumexp-q_t_values)
+        q_t_logsumexp = torch.logsumexp(qa_t_values, 1)
+        cql_loss = (q_t_logsumexp - q_t_values)
+        cql_loss = cql_loss.mean()
+
+        loss = self.cql_alpha * cql_loss + dqn_loss
 
         self.optimizer.zero_grad()
-        cql_loss.backward()
+        loss.backward()
+        utils.clip_grad_value_(self.q_net.parameters(), self.grad_norm_clipping)
         self.optimizer.step()
 
-        info = {'Training Loss': ptu.to_numpy(loss)}
+        info = {'Training Loss': ptu.to_numpy(dqn_loss)}
 
         # TODO: Uncomment these lines after implementing CQL
         info['CQL Loss'] = ptu.to_numpy(cql_loss)
         info['Data q-values'] = ptu.to_numpy(q_t_values).mean()
         info['OOD q-values'] = ptu.to_numpy(q_t_logsumexp).mean()
-        
+
         self.learning_rate_scheduler.step()
 
         return info

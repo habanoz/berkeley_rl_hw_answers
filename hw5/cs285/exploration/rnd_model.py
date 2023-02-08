@@ -36,6 +36,8 @@ class RNDModel(nn.Module, BaseExplorationModel):
                                          output_size=self.output_size,
                                          n_layers=self.n_layers,
                                          size=self.size)
+        self.model_f.to(ptu.device)
+        self.model_f_hat.to(ptu.device)
 
         for module in self.model_f.modules():
             if isinstance(module, nn.Linear):
@@ -62,7 +64,7 @@ class RNDModel(nn.Module, BaseExplorationModel):
         pred_f_hat = self.model_f_hat(ob_no)
 
         #prediction_error = self.loss(pred_f, pred_f_hat)
-        prediction_error = (pred_f- pred_f_hat).abs().mean(dim=-1)
+        prediction_error = (pred_f-pred_f_hat).abs().mean(dim=-1)
 
         return prediction_error
 
@@ -74,6 +76,7 @@ class RNDModel(nn.Module, BaseExplorationModel):
     def update(self, ob_no):
         # <DONE>: Update f_hat using ob_no
         # Hint: Take the mean prediction error across the batch
+        ob_no = ptu.from_numpy(ob_no)
 
         prediction_error = self(ob_no)
         prediction_error = prediction_error.mean()

@@ -30,41 +30,29 @@ class RNDModel(nn.Module, BaseExplorationModel):
         self.model_f = ptu.build_mlp(input_size=self.ob_dim,
                                      output_size=self.output_size,
                                      n_layers=self.n_layers,
-                                     size=self.size)
+                                     size=self.size,
+                                     init_method=init_method_1)
 
         self.model_f_hat = ptu.build_mlp(input_size=self.ob_dim,
                                          output_size=self.output_size,
                                          n_layers=self.n_layers,
-                                         size=self.size)
+                                         size=self.size,
+                                         init_method=init_method_2)
         self.model_f.to(ptu.device)
         self.model_f_hat.to(ptu.device)
-
-        for module in self.model_f.modules():
-            if isinstance(module, nn.Linear):
-                init_method_1(module)
-
-        for module in self.model_f_hat.modules():
-            if isinstance(module, nn.Linear):
-                init_method_2(module)
 
         self.optimizer = self.optimizer_spec.constructor(
             self.model_f_hat.parameters(),
             **self.optimizer_spec.optim_kwargs
         )
 
-        self.loss = nn.L1Loss()
-
     def forward(self, ob_no):
         # <DONE>: Get the prediction error for ob_no
         # HINT: Remember to detach the output of self.f!
-
-        # ob_no = ptu.from_numpy(ob_no)
-
         pred_f = self.model_f(ob_no).detach()
         pred_f_hat = self.model_f_hat(ob_no)
 
-        #prediction_error = self.loss(pred_f, pred_f_hat)
-        prediction_error = (pred_f-pred_f_hat).abs().mean(dim=-1)
+        prediction_error = (pred_f - pred_f_hat).square().sum(dim=1)
 
         return prediction_error
 

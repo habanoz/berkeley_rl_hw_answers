@@ -52,10 +52,11 @@ class CQLCritic(BaseCritic):
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
 
         with torch.no_grad():
+            # todo: one may implement double dqn here!!!
             qa_tp_values = self.q_net_target(next_ob_no)
             y = reward_n + self.gamma * qa_tp_values.max(dim=-1)[0] * (1 - terminal_n)
 
-        loss = self.loss(q_t_values, y.detach())
+        loss = self.loss(q_t_values, y)
 
         return loss, qa_t_values, q_t_values
 
@@ -102,7 +103,7 @@ class CQLCritic(BaseCritic):
         utils.clip_grad_value_(self.q_net.parameters(), self.grad_norm_clipping)
         self.optimizer.step()
 
-        info = {'Training Loss': ptu.to_numpy(dqn_loss)}
+        info = {'Training Loss': ptu.to_numpy(loss)}
 
         # TODO: Uncomment these lines after implementing CQL
         info['CQL Loss'] = ptu.to_numpy(cql_loss)

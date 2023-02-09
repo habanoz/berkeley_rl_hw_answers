@@ -45,8 +45,6 @@ class CQLCritic(BaseCritic):
         self.loss = nn.MSELoss()
 
     def dqn_loss(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
-        raise Exception("Not implemented")
-
         """ Implement DQN Loss """
         qa_t_values = self.q_net(ob_no)
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
@@ -61,8 +59,6 @@ class CQLCritic(BaseCritic):
         return loss, qa_t_values, q_t_values
 
     def update(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
-        raise Exception("Not implemented")
-
         """
             Update the parameters of the critic.
             let sum_of_path_lengths be the sum of the lengths of the paths sampled from

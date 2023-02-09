@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import pdb
+import matplotlib.pyplot as plt
 
 import gym
 from gym import wrappers
@@ -14,6 +15,7 @@ from cs285.infrastructure.atari_wrappers import ReturnWrapper
 
 from cs285.infrastructure import utils
 from cs285.infrastructure.logger import Logger
+from pathlib import Path
 
 from cs285.agents.explore_or_exploit_agent import ExplorationOrExploitationAgent
 from cs285.infrastructure.dqn_utils import (
@@ -129,6 +131,8 @@ class RL_Trainer(object):
         agent_class = self.params['agent_class']
         self.agent = agent_class(self.env, self.params['agent_params'])
 
+        self.mean_rewards = []
+
     def run_training_loop(self, n_iter, collect_policy, eval_policy,
                           buffer_name=None,
                           initial_expertdata=None, relabel_with_expert=False,
@@ -216,6 +220,7 @@ class RL_Trainer(object):
                 if self.params['save_params']:
                     self.agent.save('{}/agent_itr_{}.pt'.format(self.params['logdir'], itr))
 
+        self.plot()
     ####################################
     ####################################
 
@@ -270,7 +275,7 @@ class RL_Trainer(object):
 
     ####################################
     ####################################
-    
+
     def perform_dqn_logging(self, all_logs):
         last_log = all_logs[-1]
 
@@ -286,7 +291,10 @@ class RL_Trainer(object):
         print("Timestep %d" % (self.agent.t,))
         if self.mean_episode_reward > -5000:
             logs["Train_AverageReturn"] = np.mean(self.mean_episode_reward)
+
         print("mean reward (100 episodes) %f" % self.mean_episode_reward)
+        self.mean_rewards.append(self.mean_episode_reward)
+
         if self.best_mean_episode_reward > -5000:
             logs["Train_BestReturn"] = np.mean(self.best_mean_episode_reward)
         print("best mean reward %f" % self.best_mean_episode_reward)
@@ -392,6 +400,11 @@ class RL_Trainer(object):
         self.fig = plt.figure()
         filepath = lambda name: self.params['logdir']+'/curr_{}.png'.format(name)
 
+        Path(self.params['logdir']+'/curr_state_density').mkdir(parents=True, exist_ok=True)
+        Path(self.params['logdir']+'/curr_rnd_value').mkdir(parents=True, exist_ok=True)
+        Path(self.params['logdir']+'/curr_exploitation_value').mkdir(parents=True, exist_ok=True)
+        Path(self.params['logdir']+'/curr_exploration_value').mkdir(parents=True, exist_ok=True)
+
         num_states = self.agent.replay_buffer.num_in_buffer - 2
         states = self.agent.replay_buffer.obs[:num_states]
         if num_states <= 0: return
@@ -400,7 +413,7 @@ class RL_Trainer(object):
         plt.imshow(np.rot90(H), interpolation='bicubic')
         plt.colorbar()
         plt.title('State Density')
-        self.fig.savefig(filepath('state_density'), bbox_inches='tight')
+        self.fig.savefig(filepath(f'state_density/state_density{itr}'), bbox_inches='tight')
 
         plt.clf()
         ii, jj = np.meshgrid(np.linspace(0, 1), np.linspace(0, 1))
@@ -410,7 +423,7 @@ class RL_Trainer(object):
         plt.imshow(density[::-1])
         plt.colorbar()
         plt.title('RND Value')
-        self.fig.savefig(filepath('rnd_value'), bbox_inches='tight')
+        self.fig.savefig(filepath(f'rnd_value/rnd_value{itr}'), bbox_inches='tight')
 
         plt.clf()
         exploitation_values = self.agent.exploitation_critic.qa_values(obs).mean(-1)
@@ -418,7 +431,7 @@ class RL_Trainer(object):
         plt.imshow(exploitation_values[::-1])
         plt.colorbar()
         plt.title('Predicted Exploitation Value')
-        self.fig.savefig(filepath('exploitation_value'), bbox_inches='tight')
+        self.fig.savefig(filepath(f'exploitation_value/exploitation_value{itr}'), bbox_inches='tight')
 
         plt.clf()
         exploration_values = self.agent.exploration_critic.qa_values(obs).mean(-1)
@@ -426,4 +439,13 @@ class RL_Trainer(object):
         plt.imshow(exploration_values[::-1])
         plt.colorbar()
         plt.title('Predicted Exploration Value')
-        self.fig.savefig(filepath('exploration_value'), bbox_inches='tight')
+        self.fig.savefig(filepath(f'exploration_value/exploration_value{itr}'), bbox_inches='tight')
+
+    def plot(self):
+        plt.figure(figsize=(20,10))
+        plt.plot(self.mean_rewards)
+
+        plt.xticks(list(range(len(self.mean_rewards))))
+        plt.grid()
+        plt.savefig(self.params['logdir'] + '/expl_mean_rewards.png')
+        pass

@@ -6,8 +6,8 @@ from .base_exploration_model import BaseExplorationModel
 
 
 def init_method_1(model):
-    model.weight.data.uniform_()
-    model.bias.data.uniform_()
+    model.weight.data.uniform_(-1, 1)
+    model.bias.data.uniform_(-1, 1)
 
 
 def init_method_2(model):

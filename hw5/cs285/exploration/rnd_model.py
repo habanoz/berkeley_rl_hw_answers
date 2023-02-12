@@ -43,7 +43,8 @@ class RNDModel(nn.Module, BaseExplorationModel):
 
         self.optimizer = self.optimizer_spec.constructor(
             self.model_f_hat.parameters(),
-            **self.optimizer_spec.optim_kwargs
+            lr=0.001
+            #**self.optimizer_spec.optim_kwargs
         )
 
     def forward(self, ob_no):

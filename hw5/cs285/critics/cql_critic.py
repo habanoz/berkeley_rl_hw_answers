@@ -49,12 +49,18 @@ class CQLCritic(BaseCritic):
         qa_t_values = self.q_net(ob_no)
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
 
-        with torch.no_grad():
-            # todo: one may implement double dqn here!!!
-            qa_tp_values = self.q_net_target(next_ob_no)
-            y = reward_n + self.gamma * qa_tp_values.max(dim=-1)[0] * (1 - terminal_n)
+        qa_tp1_values = self.q_net_target(next_ob_no)
 
-        loss = self.loss(q_t_values, y)
+        if self.double_q:
+            next_actions = self.q_net(next_ob_no).argmax(dim=1)
+            q_tp1 = torch.gather(qa_tp1_values, 1, next_actions.unsqueeze(1)).squeeze(1)
+        else:
+            q_tp1, _ = qa_tp1_values.max(dim=1)
+
+        target = reward_n + self.gamma * q_tp1 * (1 - terminal_n)
+        target = target.detach()
+
+        loss = self.loss(q_t_values, target)
 
         return loss, qa_t_values, q_t_values
 

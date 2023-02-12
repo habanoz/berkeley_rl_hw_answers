@@ -408,24 +408,35 @@ class RL_Trainer(object):
         num_states = self.agent.replay_buffer.num_in_buffer - 2
         states = self.agent.replay_buffer.obs[:num_states]
         if num_states <= 0: return
-        
+
+        ii, jj = np.meshgrid(np.linspace(0, 1), np.linspace(0, 1))
+        obs = np.stack([ii.flatten(), jj.flatten()], axis=1)
+
+        # uncomment this line to plot exploration related charts only while exploring...
+        # if (not isinstance(self.agent, ExplorationOrExploitationAgent)) or ((not self.agent.offline_exploitation) or (self.agent.t <= self.agent.num_exploration_steps+1)):
         H, xedges, yedges = np.histogram2d(states[:,0], states[:,1], range=[[0., 1.], [0., 1.]], density=True)
         plt.imshow(np.rot90(H), interpolation='bicubic')
         plt.colorbar()
         plt.title('State Density')
         self.fig.savefig(filepath(f'state_density/state_density{itr}'), bbox_inches='tight')
-
         plt.clf()
-        ii, jj = np.meshgrid(np.linspace(0, 1), np.linspace(0, 1))
-        obs = np.stack([ii.flatten(), jj.flatten()], axis=1)
+
         density = self.agent.exploration_model.forward_np(obs)
         density = density.reshape(ii.shape)
         plt.imshow(density[::-1])
         plt.colorbar()
         plt.title('RND Value')
         self.fig.savefig(filepath(f'rnd_value/rnd_value{itr}'), bbox_inches='tight')
-
         plt.clf()
+
+        exploration_values = self.agent.exploration_critic.qa_values(obs).mean(-1)
+        exploration_values = exploration_values.reshape(ii.shape)
+        plt.imshow(exploration_values[::-1])
+        plt.colorbar()
+        plt.title('Predicted Exploration Value')
+        self.fig.savefig(filepath(f'exploration_value/exploration_value{itr}'), bbox_inches='tight')
+        plt.clf()
+
         exploitation_values = self.agent.exploitation_critic.qa_values(obs).mean(-1)
         exploitation_values = exploitation_values.reshape(ii.shape)
         plt.imshow(exploitation_values[::-1])
@@ -433,13 +444,6 @@ class RL_Trainer(object):
         plt.title('Predicted Exploitation Value')
         self.fig.savefig(filepath(f'exploitation_value/exploitation_value{itr}'), bbox_inches='tight')
 
-        plt.clf()
-        exploration_values = self.agent.exploration_critic.qa_values(obs).mean(-1)
-        exploration_values = exploration_values.reshape(ii.shape)
-        plt.imshow(exploration_values[::-1])
-        plt.colorbar()
-        plt.title('Predicted Exploration Value')
-        self.fig.savefig(filepath(f'exploration_value/exploration_value{itr}'), bbox_inches='tight')
 
     def plot(self):
         plt.figure(figsize=(20,10))

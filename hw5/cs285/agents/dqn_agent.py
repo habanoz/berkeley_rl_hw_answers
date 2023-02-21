@@ -53,7 +53,7 @@ class DQNAgent(object):
         if self.replay_buffer.can_sample(self.batch_size):
             return self.replay_buffer.sample(batch_size)
         else:
-            return [],[],[],[],[]
+            return [],[],[],[],[], []
 
     def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):
         raise NotImplementedError

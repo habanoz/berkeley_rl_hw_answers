@@ -429,6 +429,7 @@ class MemoryOptimizedReplayBuffer(object):
         self.action   = None
         self.reward   = None
         self.done     = None
+        self.trunc     = None
 
     def can_sample(self, batch_size):
         """Returns true if `batch_size` different transitions can be sampled from the buffer."""
@@ -440,8 +441,9 @@ class MemoryOptimizedReplayBuffer(object):
         rew_batch      = self.reward[idxes]
         next_obs_batch = np.concatenate([self._encode_observation(idx + 1)[None] for idx in idxes], 0)
         done_mask      = np.array([1.0 if self.done[idx] else 0.0 for idx in idxes], dtype=np.float32)
+        trunc_mask      = np.array([1.0 if self.trunc[idx] else 0.0 for idx in idxes], dtype=np.float32)
 
-        return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask
+        return obs_batch, act_batch, rew_batch, next_obs_batch, done_mask, trunc_mask
 
 
     def sample(self, batch_size):
@@ -540,6 +542,8 @@ class MemoryOptimizedReplayBuffer(object):
             self.action   = np.empty([self.size],                     dtype=np.int32)
             self.reward   = np.empty([self.size],                     dtype=np.float32)
             self.done     = np.empty([self.size],                     dtype=bool)
+            self.trunc     = np.empty([self.size],                     dtype=bool)
+
         self.obs[self.next_idx] = frame
 
         ret = self.next_idx
@@ -548,7 +552,7 @@ class MemoryOptimizedReplayBuffer(object):
 
         return ret
 
-    def store_effect(self, idx, action, reward, done):
+    def store_effect(self, idx, action, reward, done, trunc):
         """Store effects of action taken after obeserving frame stored
         at index idx. The reason `store_frame` and `store_effect` is broken
         up into two functions is so that once can call `encode_recent_observation`
@@ -568,3 +572,4 @@ class MemoryOptimizedReplayBuffer(object):
         self.action[idx] = action
         self.reward[idx] = reward
         self.done[idx]   = done
+        self.trunc[idx]   = trunc

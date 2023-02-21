@@ -3,11 +3,15 @@ from torch import nn
 
 from cs285.infrastructure import pytorch_util as ptu
 from .base_exploration_model import BaseExplorationModel
+import torch.optim as optim
 
 
 def init_method_1(model):
-    model.weight.data.uniform_(-1, 1)
-    model.bias.data.uniform_(-1, 1)
+    # model.weight.data.uniform_(-1, 1)
+    # model.bias.data.uniform_(-1, 1)
+
+    model.weight.data.uniform_()
+    model.bias.data.uniform_()
 
 
 def init_method_2(model):
@@ -43,8 +47,12 @@ class RNDModel(nn.Module, BaseExplorationModel):
 
         self.optimizer = self.optimizer_spec.constructor(
             self.model_f_hat.parameters(),
-            lr=0.001
-            #**self.optimizer_spec.optim_kwargs
+            **self.optimizer_spec.optim_kwargs
+        )
+
+        self.learning_rate_scheduler = optim.lr_scheduler.LambdaLR(
+            self.optimizer,
+            self.optimizer_spec.learning_rate_schedule,
         )
 
     def forward(self, ob_no):
@@ -53,7 +61,7 @@ class RNDModel(nn.Module, BaseExplorationModel):
         pred_f = self.model_f(ob_no).detach()
         pred_f_hat = self.model_f_hat(ob_no)
 
-        prediction_error = (pred_f - pred_f_hat).square().sum(dim=1)
+        prediction_error = (pred_f - pred_f_hat).square().mean(-1)
 
         return prediction_error
 
@@ -73,6 +81,8 @@ class RNDModel(nn.Module, BaseExplorationModel):
         self.optimizer.zero_grad()
         prediction_error.backward()
         self.optimizer.step()
+
+        self.learning_rate_scheduler.step()
 
         return {
             'Training Loss': ptu.to_numpy(prediction_error),

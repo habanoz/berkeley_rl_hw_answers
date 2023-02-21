@@ -19,16 +19,16 @@ from pathlib import Path
 
 from cs285.agents.explore_or_exploit_agent import ExplorationOrExploitationAgent
 from cs285.infrastructure.dqn_utils import (
-        get_wrapper_by_name,
-        register_custom_envs,
+    get_wrapper_by_name,
+    register_custom_envs,
 )
 
-#register all of our envs
+# register all of our envs
 import cs285.envs
 
 # how many rollouts to save as videos to tensorboard
 MAX_NVIDEO = 2
-MAX_VIDEO_LEN = 40 # we overwrite this in the code below
+MAX_VIDEO_LEN = 40  # we overwrite this in the code below
 
 
 class RL_Trainer(object):
@@ -58,8 +58,14 @@ class RL_Trainer(object):
 
         # Make the gym environment
         register_custom_envs()
+        time_limit = self.params['ep_len'] if 'ep_len' in self.params else None
+
         self.env = gym.make(self.params['env_name'])
         self.eval_env = gym.make(self.params['env_name'])
+
+        if time_limit is not None:
+            self.env = gym.wrappers.TimeLimit(self.env, max_episode_steps=time_limit)
+
         if not ('pointmass' in self.params['env_name']):
             import matplotlib
             matplotlib.use('Agg')
@@ -70,24 +76,28 @@ class RL_Trainer(object):
             self.episode_trigger = lambda episode: episode % self.params['video_log_freq'] == 0
         else:
             self.episode_trigger = lambda episode: False
-            
+
         if 'env_wrappers' in self.params:
             # These operations are currently only for Atari envs
             self.env = wrappers.RecordEpisodeStatistics(self.env, deque_size=1000)
             self.env = ReturnWrapper(self.env)
-            self.env = wrappers.RecordVideo(self.env, os.path.join(self.params['logdir'], "gym"), episode_trigger=self.episode_trigger)
+            self.env = wrappers.RecordVideo(self.env, os.path.join(self.params['logdir'], "gym"),
+                                            episode_trigger=self.episode_trigger)
             self.env = params['env_wrappers'](self.env)
 
             self.eval_env = wrappers.RecordEpisodeStatistics(self.eval_env, deque_size=1000)
             self.eval_env = ReturnWrapper(self.eval_env)
-            self.eval_env = wrappers.RecordVideo(self.eval_env, os.path.join(self.params['logdir'], "gym"), episode_trigger=self.episode_trigger)
+            self.eval_env = wrappers.RecordVideo(self.eval_env, os.path.join(self.params['logdir'], "gym"),
+                                                 episode_trigger=self.episode_trigger)
             self.eval_env = params['env_wrappers'](self.eval_env)
 
             self.mean_episode_reward = -float('nan')
             self.best_mean_episode_reward = -float('inf')
         if 'non_atari_colab_env' in self.params and self.params['video_log_freq'] > 0:
-            self.env = wrappers.RecordVideo(self.env, os.path.join(self.params['logdir'], "gym"), episode_trigger=self.episode_trigger)
-            self.eval_env = wrappers.RecordVideo(self.eval_env, os.path.join(self.params['logdir'], "gym"), episode_trigger=self.episode_trigger)
+            self.env = wrappers.RecordVideo(self.env, os.path.join(self.params['logdir'], "gym"),
+                                            episode_trigger=self.episode_trigger)
+            self.eval_env = wrappers.RecordVideo(self.eval_env, os.path.join(self.params['logdir'], "gym"),
+                                                 episode_trigger=self.episode_trigger)
 
             self.mean_episode_reward = -float('nan')
             self.best_mean_episode_reward = -float('inf')
@@ -115,14 +125,13 @@ class RL_Trainer(object):
 
         # simulation timestep, will be used for video saving
         if 'model' in dir(self.env):
-            self.fps = 1/self.env.model.opt.timestep
+            self.fps = 1 / self.env.model.opt.timestep
         elif 'env_wrappers' in self.params:
-            self.fps = 30 # This is not actually used when using the Monitor wrapper
+            self.fps = 30  # This is not actually used when using the Monitor wrapper
         elif 'video.frames_per_second' in self.env.env.metadata.keys():
             self.fps = self.env.env.metadata['video.frames_per_second']
         else:
             self.fps = 10
-
 
         #############
         ## AGENT
@@ -155,7 +164,19 @@ class RL_Trainer(object):
 
         for itr in range(n_iter):
             if itr % print_period == 0:
-                print("\n\n********** Iteration %i ************"%itr)
+                print("\n\n********** Iteration %i ************" % itr)
+
+            if not ('pointmass' in self.params['env_name']):
+                import matplotlib
+                matplotlib.use('Agg')
+                root = "/" + str(int(itr / 10000))
+
+                if not os.path.isdir(self.params['logdir'] + root):
+                    os.makedirs(self.params['logdir'] + root + '/expl')
+                    os.makedirs(self.params['logdir'] + root + '/eval')
+
+                self.env.set_logdir(self.params['logdir'] + root + '/expl/'+str(itr)+"_")
+                self.eval_env.set_logdir(self.params['logdir'] + root + '/eval/'+str(itr)+"_")
 
             # decide if videos should be rendered/logged at this iteration
             if itr % self.params['video_log_freq'] == 0 and self.params['video_log_freq'] != -1:
@@ -179,19 +200,18 @@ class RL_Trainer(object):
                 paths = None
             else:
                 use_batchsize = self.params['batch_size']
-                if itr==0:
+                if itr == 0:
                     use_batchsize = self.params['batch_size_initial']
                 paths, envsteps_this_batch, train_video_paths = (
                     self.collect_training_trajectories(
                         itr, initial_expertdata, collect_policy, use_batchsize)
                 )
 
-            
             if (not self.agent.offline_exploitation) or (self.agent.t <= self.agent.num_exploration_steps):
                 self.total_envsteps += envsteps_this_batch
 
             # relabel the collected obs with actions from a provided expert policy
-            if relabel_with_expert and itr>=start_relabel_with_expert:
+            if relabel_with_expert and itr >= start_relabel_with_expert:
                 paths = self.do_relabel_with_expert(expert_policy, paths)
 
             # add collected data to replay buffer
@@ -221,10 +241,12 @@ class RL_Trainer(object):
                     self.agent.save('{}/agent_itr_{}.pt'.format(self.params['logdir'], itr))
 
         self.plot()
+
     ####################################
     ####################################
 
-    def collect_training_trajectories(self, itr, initial_expertdata, collect_policy, num_transitions_to_sample, save_expert_data_to_disk=False):
+    def collect_training_trajectories(self, itr, initial_expertdata, collect_policy, num_transitions_to_sample,
+                                      save_expert_data_to_disk=False):
         """
         :param itr:
         :param load_initial_expertdata:  path to expert data pkl file
@@ -244,7 +266,8 @@ class RL_Trainer(object):
 
         # collect data to be used for training
         print("\nCollecting data to be used for training...")
-        paths, envsteps_this_batch = utils.sample_trajectories(self.env, collect_policy, num_transitions_to_sample, self.params['ep_len'])
+        paths, envsteps_this_batch = utils.sample_trajectories(self.env, collect_policy, num_transitions_to_sample,
+                                                               self.params['ep_len'])
 
         # collect more rollouts with the same policy, to be saved as videos in tensorboard
         train_video_paths = None
@@ -261,8 +284,9 @@ class RL_Trainer(object):
     def train_agent(self):
         all_logs = []
         for train_step in range(self.params['num_agent_train_steps_per_iter']):
-            ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch = self.agent.sample(self.params['train_batch_size'])
-            train_log = self.agent.train(ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch)
+            ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch, trunc_batch = self.agent.sample(
+                self.params['train_batch_size'])
+            train_log = self.agent.train(ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch, trunc_batch)
             all_logs.append(train_log)
         return all_logs
 
@@ -305,9 +329,11 @@ class RL_Trainer(object):
             logs["TimeSinceStart"] = time_since_start
 
         logs.update(last_log)
-        
-        eval_paths, eval_envsteps_this_batch = utils.sample_trajectories(self.eval_env, self.agent.eval_policy, self.params['eval_batch_size'], self.params['ep_len'])
-        
+
+        eval_paths, eval_envsteps_this_batch = utils.sample_trajectories(self.eval_env, self.agent.eval_policy,
+                                                                         self.params['eval_batch_size'],
+                                                                         self.params['ep_len'])
+
         eval_returns = [eval_path["reward"].sum() for eval_path in eval_paths]
         eval_ep_lens = [len(eval_path["reward"]) for eval_path in eval_paths]
 
@@ -316,7 +342,7 @@ class RL_Trainer(object):
         logs["Eval_MaxReturn"] = np.max(eval_returns)
         logs["Eval_MinReturn"] = np.min(eval_returns)
         logs["Eval_AverageEpLen"] = np.mean(eval_ep_lens)
-        
+
         logs['Buffer size'] = self.agent.replay_buffer.num_in_buffer
 
         sys.stdout.flush()
@@ -336,19 +362,21 @@ class RL_Trainer(object):
 
         # collect eval trajectories, for logging
         print("\nCollecting data for eval...")
-        eval_paths, eval_envsteps_this_batch = utils.sample_trajectories(self.env, eval_policy, self.params['eval_batch_size'], self.params['ep_len'])
+        eval_paths, eval_envsteps_this_batch = utils.sample_trajectories(self.env, eval_policy,
+                                                                         self.params['eval_batch_size'],
+                                                                         self.params['ep_len'])
 
         # save eval rollouts as videos in tensorboard event file
         if self.logvideo and train_video_paths != None:
             print('\nCollecting video rollouts eval')
             eval_video_paths = utils.sample_n_trajectories(self.env, eval_policy, MAX_NVIDEO, MAX_VIDEO_LEN, True)
 
-            #save train/eval videos
+            # save train/eval videos
             print('\nSaving train rollouts as videos...')
             self.logger.log_paths_as_videos(train_video_paths, itr, fps=self.fps, max_videos_to_save=MAX_NVIDEO,
                                             video_title='train_rollouts')
-            self.logger.log_paths_as_videos(eval_video_paths, itr, fps=self.fps,max_videos_to_save=MAX_NVIDEO,
-                                             video_title='eval_rollouts')
+            self.logger.log_paths_as_videos(eval_video_paths, itr, fps=self.fps, max_videos_to_save=MAX_NVIDEO,
+                                            video_title='eval_rollouts')
 
         #######################
 
@@ -395,15 +423,18 @@ class RL_Trainer(object):
 
             self.logger.flush()
 
+
     def dump_density_graphs(self, itr):
         import matplotlib.pyplot as plt
-        self.fig = plt.figure()
-        filepath = lambda name: self.params['logdir']+'/curr_{}.png'.format(name)
+        plt.clf()
 
-        Path(self.params['logdir']+'/curr_state_density').mkdir(parents=True, exist_ok=True)
-        Path(self.params['logdir']+'/curr_rnd_value').mkdir(parents=True, exist_ok=True)
-        Path(self.params['logdir']+'/curr_exploitation_value').mkdir(parents=True, exist_ok=True)
-        Path(self.params['logdir']+'/curr_exploration_value').mkdir(parents=True, exist_ok=True)
+        self.fig = plt.figure()
+        filepath = lambda name: self.params['logdir'] + '/curr_{}.png'.format(name)
+
+        Path(self.params['logdir'] + '/curr_state_density').mkdir(parents=True, exist_ok=True)
+        Path(self.params['logdir'] + '/curr_rnd_value').mkdir(parents=True, exist_ok=True)
+        Path(self.params['logdir'] + '/curr_exploitation_value').mkdir(parents=True, exist_ok=True)
+        Path(self.params['logdir'] + '/curr_exploration_value').mkdir(parents=True, exist_ok=True)
 
         num_states = self.agent.replay_buffer.num_in_buffer - 2
         states = self.agent.replay_buffer.obs[:num_states]
@@ -414,7 +445,7 @@ class RL_Trainer(object):
 
         # uncomment this line to plot exploration related charts only while exploring...
         # if (not isinstance(self.agent, ExplorationOrExploitationAgent)) or ((not self.agent.offline_exploitation) or (self.agent.t <= self.agent.num_exploration_steps+1)):
-        H, xedges, yedges = np.histogram2d(states[:,0], states[:,1], range=[[0., 1.], [0., 1.]], density=True)
+        H, xedges, yedges = np.histogram2d(states[:, 0], states[:, 1], range=[[0., 1.], [0., 1.]], density=True)
         plt.imshow(np.rot90(H), interpolation='bicubic')
         plt.colorbar()
         plt.title('State Density')
@@ -444,9 +475,8 @@ class RL_Trainer(object):
         plt.title('Predicted Exploitation Value')
         self.fig.savefig(filepath(f'exploitation_value/exploitation_value{itr}'), bbox_inches='tight')
 
-
     def plot(self):
-        plt.figure(figsize=(20,10))
+        plt.figure(figsize=(20, 10))
         plt.plot(self.mean_rewards)
 
         plt.xticks(list(range(len(self.mean_rewards))))

@@ -83,7 +83,7 @@ def main():
     params['num_critic_updates_per_agent_update'] = 1
     params['exploit_weight_schedule'] = ConstantSchedule(1.0)
     params['video_log_freq'] = -1 # This param is not used for DQN
-    params['num_timesteps'] = 50000
+    params['num_timesteps'] = 50_000+1
     params['learning_starts'] = 2000
     params['eps'] = 0.2
     ##################################
@@ -113,7 +113,7 @@ def main():
     
 
     logdir_prefix = 'hw5_expl_'  # keep for autograder
-    data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../data')
+    data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../data/q1-p1')
 
     if not (os.path.exists(data_path)):
         os.makedirs(data_path)

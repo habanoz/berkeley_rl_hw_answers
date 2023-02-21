@@ -12,16 +12,12 @@ def get_section_results(file):
         requires tensorflow==1.12.0
     """
     I = []
-    X = [0, ]
+    X = []
     Y = []
     T = []
-    # starts learning after 2000 iterations
-    mrm = [0, 0, 0]
-    mrs = [0, 0, 0]
-    erm = [0, 0, 0]
-    ers = [0, 0, 0]
 
-    q_val_means = []
+    mrm = []
+    erm = []
 
     time0 = None
     for e in summary_iterator(file):
@@ -38,32 +34,33 @@ def get_section_results(file):
                 time0 = e.wall_time
             elif v.tag == 'Mixed_Reward_Mean':
                 mrm.append(v.simple_value)
-            elif v.tag == 'Mixed_Reward_Srd':
-                mrs.append(v.simple_value)
             elif v.tag == 'Env_Reward_Mean':
                 erm.append(v.simple_value)
-            elif v.tag == 'Env_Reward_Std':
-                ers.append(v.simple_value)
-            elif v.tag == 'exploitation_q_mean':
-                q_val_means.append(v.simple_value)
-    return I, X, Y, mrm, mrs, erm, ers, q_val_means
+    return I, X, Y, mrm, erm
 
 
 def read_log_dir(logdir):
     eventfile = glob.glob(logdir + "/events*")[0]
-    I, X, Y, mrm, mrs, erm, ers, q_val_means = get_section_results(eventfile)
+    I, X, Y, mrm, erm = get_section_results(eventfile)
     for i, (x, y) in enumerate(zip(X, Y)):
         print('Iteration {:d} | Mean reward(100): {} | Eval Return: {}'.format(i, x, y))
 
-    np.savetxt(logdir + "/eval.txt", np.array([I, X, Y, mrm, mrs, erm, ers, q_val_means]))
+    n_its = len(I)
+    X = [0]*(n_its-len(X))+X
+    Y = [0]*(n_its-len(Y))+Y
+    mrm = [0]*(n_its-len(mrm))+mrm
+    erm = [0]*(n_its-len(erm))+erm
 
-    return 1 if len(X)>0 else 0
+    np.savetxt(logdir + "/eval.txt", np.array([I, X, Y, mrm, erm]))
+
+    return 1 if len(X) > 0 else 0
+
 
 if __name__ == '__main__':
-    log_dirs = glob.glob("data/nrd_mse_lr1e-3-trunc-rndbranch-after-learning-2/hw5_expl_q1_env1_rnd_no_disc_PointmassMedium-v0_*")
+    log_dirs = glob.glob("data/q1-p1/hw5_expl_q1_*")
 
     sum = 0
     for logdir in log_dirs:
-        sum+=read_log_dir(logdir)
+        sum += read_log_dir(logdir)
 
     print(f"{sum} files created")

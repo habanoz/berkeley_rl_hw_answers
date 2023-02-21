@@ -1,0 +1,111 @@
+%! Author = melek
+%! Date = 22.01.2023
+
+% Preamble
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\graphicspath{ {../images/} }
+
+\title{Assignment 5: Exploration Strategies and Offline Reinforcement Learning}
+\author{huseyinabanox@gmail.com}
+\date{February 2023}
+
+% Document
+\begin{document}
+
+    \maketitle
+
+    \section{Part 1: “Unsupervised” RND and exploration performance}
+
+    \subsection{RND Implementation}
+
+    Different parameters are tried to get best out of the RND implementation.
+    For each configuration a comparative study with 3 different (e.g. 0,1,2) seeds is done.
+    Average of the different seeds is used to compare the effect of the configuration.
+
+    In the default configuration learning rate is taken 0.001, uniform distribution range is between -1 and +1.
+
+    \subsubsection{Normalization}
+
+    Normalizing is applied commonly by subtracting mean and dividing by standard deviation.
+    An exponential running average of mean and standard deviation can be kept for this purpose.
+
+    However, in the paper and homework 5 document, suggested way of normalization is dividing with the standard deviation.
+
+    Following plots can be investigated to decide on the better configuration.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/norm-medium-train}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/norm-medium-eval}
+
+    For the medium environment using mean in normalization yields slightly better training and evaluation performance.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/norm-hard-train}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/norm-hard-eval}
+
+    For the hard environment using mean in normalization yields slightly better training performance.
+    Evaluation performance is similar.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/norm-medium-mixed-return}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/norm-hard-mixed-return}
+
+    Mixed reward in this problem, only contains exploration bonus.
+    Using mean in normalization moves the mixed reward around zero.
+    Using standard deviation only normalization moves the mixed reward around 1.
+
+    The overall results may seem to favor using the mean normalization.
+    However, the difference is not big.
+    Thus, standard deviation only normalization is preferred because it is the suggested way in the original paper and homework document.
+    This probably due to fact that using mean moves normalized exploration bonus around zero which may not be desirable.
+
+    \subsubsection{Normalization}
+
+    The next configuration question is whether to adhere to default distribution parameters or try different settings while initializing the target network.
+
+    The default uniform distribution generates samples between 0 and 1.
+    The normalized experiments started off with a uniform distribution that generates samples between -1 and 1.
+
+    Following plots compare different parameters.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/uniform-medium-train}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/uniform-medium-eval}
+
+    In the medium environment the difference is not significant.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/uniform-hard-train}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.5]{q1/uniform-hard-eval}
+
+    In the hard environment training performance is better for 0-1 range.
+    Evaluation performance is not easy to compare.
+    There is no obvious distinction.
+
+    There is not enough evidence to keep using -1 and +1 range for the uniform distribution.
+    Besides the initial prediction error is higher for 0 and +1 range.
+    This is preferable because target and prediction networks need to be different.
+
+    \subsubsection{Learning rate}
+
+    The homework comes with learning rate 1.0 for RND prediction network.
+    Decreasing the learning rate may help exploration.
+    It may help distill to target network slowly to avoid fluctuations in RND values for different states.
+
+
+
+\end{document}

@@ -119,3 +119,33 @@ def show_graphs_seed_steps(path, sub_path_spec, steps):
         ax[0, p].set_title(f'{Path(seed_dirs[p]).stem[9:50]}')
     for s in range(n_steps):
         ax[s, 0].set_ylabel(f'{steps[s]:,}')
+
+
+def merge_traj(path, template):
+    files = glob.glob(path + "/*.png")
+    images = np.array([(mpimg.imread(f)) for f in files])
+
+    imf_ = np.sum(images, axis=0) - template * len(images)
+
+    b0 = imf_[:, :, 1]
+    b0 = b0 - b0.min()
+    b0 = b0 / b0.max()
+    b0[b0 > 0.95] = 1.0
+
+    # plt.imshow(b0, cmap='gray')
+    return b0
+
+
+def plot_merged_traj_seeds(path, grp):
+    seed_paths = glob.glob(path + f"/{grp}/expl")
+
+    f, ax = plt.subplots(2, 2)
+
+    for p in range(len(seed_paths)):
+        spath = seed_paths[p]
+
+        template = mpimg.imread(spath+"/../../expl_last_traj.png")
+        im = merge_traj(spath, template)
+
+        ax[p // 2, p % 2].imshow(im)
+    plt.show()

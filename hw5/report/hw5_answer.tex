@@ -220,10 +220,86 @@
     The gap between RND and random strategy performances keeps open rather than closing as it was the in case in the previous environments.
 
 
+    \subsection*{Count Based Exploration Implementation}
+
+    Target environment is a simple 2D environment.
+    A simple count based exploration strategy can be used.
+
+    A state representation consists two features each in the range of 0-1.
+    State aggregation can be used to decrease number of states.
+    0-1 range is discretized into 50 parts.
+    Counts are kept in the discretized space.
+    Count table consists of 2500 elements.
+    Each table element is initialized to 1.
+
+    Count based exploration strategy is implemented in a similar way to RND strategy.
+    So results are expected to be at least as good as RND strategy.
+
+    During training, state S is discretized into s.
+    At each training step count for state s is increased by 1.
+    Exploration bonus is calculated as 1/CNT(s) where CNT(s) gives the count for the discretized state s.
+
+    Count based exploration strategy is referred to as CNT in the following discussions.
+
+    \subsubsection*{Easy Environment}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q1-p2-cnt-easy-train}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q1-p2-cnt-easy-eval}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.25]{q1/q1-p2-cnt-easy-state-density}
+
+    Count based exploration strategy produces more uniform state density.
+    In terms of training and evaluation performance CNT performs similar to RND strategy.
+    In the easy environment difference is not distinguishable.
+
+    \subsubsection*{Medium Environment}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q1-p2-cnt-medium-train}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q1-p2-cnt-medium-eval}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.25]{q1/q1-p2-cnt-medium-state-density}
+
+    Count based exploration strategy produces far more uniform state density.
+    In terms of training and evaluation performance CNT performs better than RND strategy.
+    Performance difference is a result of exploring better.
 
 
+    \subsubsection*{Hard Environment}
 
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q1-p2-cnt-hard-train}
 
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q1-p2-cnt-hard-eval}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.25]{q1/q1-p2-cnt-hard-state-density}
+
+    Count based exploration strategy initially explores better than RND does.
+    At the end, count based exploration RND exploration state densities are similar.
+
+    CNT training performance starts better thanks to better exploration.
+    CNT training performance degrades after exploitation starts.
+    This indicates CNT exploitation critic values are worse that RND exploitation critic values at the beginning of the exploitation.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q1-p2-cnt-hard-intrinsic-rewards}
+
+    Given the similarity of the generated intrinsic rewards (mixed rewards), it is not clear why CNT critic is worse.
+
+    At late stages of the exploitation, CNT exploitation critic values improve.
+    Training performance of the CNT catches the RND strategy performance.
+
+    Evaluation performance during exploration also shows that CNT exploitation critic values are worse than RND exploitation critic values.
+    CNT evaluation performance follows training performance and catches RND evaluation performance by the end of the training.
 
 
 \end{document}

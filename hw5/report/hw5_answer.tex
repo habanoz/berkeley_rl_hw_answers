@@ -302,4 +302,69 @@
     CNT evaluation performance follows training performance and catches RND evaluation performance by the end of the training.
 
 
+    \section*{Part 2: Offline learning on exploration data}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{q1/q2-p1-medium-eval-all}
+
+    \subsection*{DQN vs CQL}
+
+    The chart above shows evaluation return for DQN, Offline DQN and CQL both with bare and transformed (labelled as Shift) rewards.
+
+    \subsubsection*{Bare Rewards}
+
+    \hspace*{-0.4in}
+    \includegraphics[scale=0.20]{q1/q2-p1-explt-dqn}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.20]{q1/q2-p1-explt-off-dqn}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.20]{q1/q2-p1-explt-cql}
+
+    Online DQN works best as expected.
+    It continues collecting new trajectories even after explorations ends.
+    Online DQN has the widest coverage of the state space.
+    As the number of successful trajectories in the buffer increase they occur more often in the training samples.
+
+    Offline DQN performs worst.
+    Once exploration phase is over, collecting new trajectories is stopped.
+    Offline DQN has to rely on the data in the buffer to improve.
+    Unfortunately coverage of the data in the buffer is limited.
+    Trajectories reaching the goal state are very few, and they rarely occur in the training samples.
+    Discounting rewards makes the problem worse.
+
+    CQL has the worst performance.
+    CQL suffers from the same problems Offline DQN suffers.
+    CQL is affected more severely.
+    Why?
+    Probably regularization parameters in the objective function makes the cql less stable in the case of inaccurate critic estimates.
+
+    In comparison to the DQN Q values, CQL overestimates Q values in one of the experiments.
+    CQL underestimates Q values in only one of the experiments.
+    CQL is not stable enough to reliably compare Q value estimates with DQN values.
+
+    \subsubsection*{Transformed Rewards}
+
+    As suggested in the homework document rewards are shifted by 1 and scaled by 100.
+    This way effects of sparsity and discounting is mitigated.
+
+    Transforming the rewards improves results for all settings.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.20]{q1/q2-p1-explt-dqn-trans}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.20]{q1/q2-p1-explt-off-dqn-trans}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.20]{q1/q2-p1-explt-cql-trans}
+
+    With the new results it is easier to derive a conclusion.
+
+    Offline DQN has a tendency to overestimate Q values.
+    CQL, on the other hand, has a tendency to underestimate Q values.
+
+    CQL is still the worst performer.
+
 \end{document}

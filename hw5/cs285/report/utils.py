@@ -96,7 +96,7 @@ def plot_metrics_from_path_avg(title, path, stats_idx, shift=0, clip=0):
     plt.show()
 
 
-def show_graphs_seed_steps(path, sub_path_spec, steps):
+def show_graphs_seed_steps(path, sub_path_spec, steps, title=None):
     seed_dirs = glob.glob(path + "*")
     seed_dirs = [dir for dir in seed_dirs if Path(dir + "/eval.txt").exists()]
 
@@ -106,7 +106,9 @@ def show_graphs_seed_steps(path, sub_path_spec, steps):
 
     rcParams['figure.figsize'] = mult * n_paths, mult * n_steps
 
-    fig, ax = plt.subplots(n_steps, n_paths)
+    fig, ax = plt.subplots(n_steps, n_paths, squeeze=False)
+    if title is not None:
+        fig.suptitle(title)
 
     for p in range(n_paths):
         for s in range(n_steps):
@@ -120,6 +122,7 @@ def show_graphs_seed_steps(path, sub_path_spec, steps):
     for s in range(n_steps):
         ax[s, 0].set_ylabel(f'{steps[s]:,}')
 
+    fig.tight_layout()
 
 def merge_traj(path, template):
     files = glob.glob(path + "/*.png")
@@ -148,4 +151,19 @@ def plot_merged_traj_seeds(path, grp):
         im = merge_traj(spath, template)
 
         ax[p // 2, p % 2].imshow(im)
+    plt.show()
+
+
+def plot_merged_traj_seeds_1row(path, grp):
+    seed_paths = glob.glob(path + f"/{grp}/expl")
+
+    f, ax = plt.subplots(1, len(seed_paths))
+
+    for p in range(len(seed_paths)):
+        spath = seed_paths[p]
+
+        template = mpimg.imread(spath+"/../../expl_last_traj.png")
+        im = merge_traj(spath, template)
+
+        ax[p].imshow(im)
     plt.show()

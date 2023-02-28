@@ -7,7 +7,7 @@ import numpy as np
 
 
 def print_seeds(path):
-    seed_dirs = glob.glob(path + "*")
+    seed_dirs = sorted(glob.glob(path + "*"))
 
     n_paths = len(seed_dirs)
 
@@ -16,7 +16,7 @@ def print_seeds(path):
 
 
 def average_metrics(path, stats_idx, shift=0, clip=0):
-    seed_dirs = glob.glob(path + "*" + "/eval.txt")
+    seed_dirs = sorted(glob.glob(path + "*" + "/eval.txt"))
     n_paths = len(seed_dirs)
 
     sum = None
@@ -52,7 +52,7 @@ def plot_arrays(title, arrays, labels):
 def plot_metrics_from_path_per_seed(title, path, stats_idx, shift=0, clip=0):
     plt.clf()
     mult = 8
-    seed_dirs = glob.glob(path + "*" + "/eval.txt")
+    seed_dirs = sorted(glob.glob(path + "*" + "/eval.txt"))
 
     n_paths = len(seed_dirs)
 
@@ -72,7 +72,7 @@ def plot_metrics_from_path_per_seed(title, path, stats_idx, shift=0, clip=0):
 def plot_metrics_from_path_avg(title, path, stats_idx, shift=0, clip=0):
     plt.clf()
     mult = 8
-    seed_dirs = glob.glob(path + "*" + "/eval.txt")
+    seed_dirs = sorted(glob.glob(path + "*" + "/eval.txt"))
 
     n_paths = len(seed_dirs)
 
@@ -97,7 +97,7 @@ def plot_metrics_from_path_avg(title, path, stats_idx, shift=0, clip=0):
 
 
 def show_graphs_seed_steps(path, sub_path_spec, steps, title=None):
-    seed_dirs = glob.glob(path + "*")
+    seed_dirs = sorted(glob.glob(path + "*"))
     seed_dirs = [dir for dir in seed_dirs if Path(dir + "/eval.txt").exists()]
 
     n_steps = len(steps)
@@ -125,7 +125,7 @@ def show_graphs_seed_steps(path, sub_path_spec, steps, title=None):
     fig.tight_layout()
 
 def merge_traj(path, template):
-    files = glob.glob(path + "/*.png")
+    files = sorted(glob.glob(path + "/*.png"))
     images = np.array([(mpimg.imread(f)) for f in files])
 
     imf_ = np.sum(images, axis=0) - template * len(images)
@@ -140,7 +140,7 @@ def merge_traj(path, template):
 
 
 def plot_merged_traj_seeds(path, grp):
-    seed_paths = glob.glob(path + f"/{grp}/expl")
+    seed_paths = sorted(glob.glob(path + f"/{grp}/expl"))
 
     f, ax = plt.subplots(2, 2)
 
@@ -155,7 +155,7 @@ def plot_merged_traj_seeds(path, grp):
 
 
 def plot_merged_traj_seeds_1row(path, grp):
-    seed_paths = glob.glob(path + f"/{grp}/expl")
+    seed_paths = sorted(glob.glob(path + f"/{grp}/expl"))
 
     f, ax = plt.subplots(1, len(seed_paths))
 

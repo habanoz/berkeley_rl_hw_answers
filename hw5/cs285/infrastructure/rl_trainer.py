@@ -328,6 +328,11 @@ class RL_Trainer(object):
             print("running time %f" % time_since_start)
             logs["TimeSinceStart"] = time_since_start
 
+        logs["Train_TotalReward"] = self.agent.replay_buffer.reward_sum
+        logs["Eval_TotalReward"] = self.agent.replay_buffer.sampled_reward_sum
+
+        self.agent.replay_buffer.reward_sum = 0
+        self.agent.replay_buffer.sampled_reward_sum = 0
         logs.update(last_log)
 
         eval_paths, eval_envsteps_this_batch = utils.sample_trajectories(self.eval_env, self.agent.eval_policy,

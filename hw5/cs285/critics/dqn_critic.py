@@ -37,7 +37,7 @@ class DQNCritic(BaseCritic):
             self.optimizer,
             self.optimizer_spec.learning_rate_schedule,
         )
-        self.loss = nn.SmoothL1Loss()  # AKA Huber loss
+        self.loss = nn.MSELoss()  # originally Huber loss was used (SmoothL1Loss)
         self.q_net.to(ptu.device)
         self.q_net_target.to(ptu.device)
 

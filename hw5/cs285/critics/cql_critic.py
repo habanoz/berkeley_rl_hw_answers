@@ -63,7 +63,7 @@ class CQLCritic(BaseCritic):
 
         return loss, qa_t_values, q_t_values
 
-    def update(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n, trunc_n):
+    def update(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
         """
             Update the parameters of the critic.
             let sum_of_path_lengths be the sum of the lengths of the paths sampled from
@@ -83,7 +83,7 @@ class CQLCritic(BaseCritic):
         ac_na = ptu.from_numpy(ac_na).to(torch.long)
         next_ob_no = ptu.from_numpy(next_ob_no)
         reward_n = ptu.from_numpy(reward_n)
-        terminal_n = ptu.from_numpy(terminal_n - trunc_n)
+        terminal_n = ptu.from_numpy(terminal_n)
 
         # Compute the DQN Loss
         dqn_loss, qa_t_values, q_t_values = self.dqn_loss(

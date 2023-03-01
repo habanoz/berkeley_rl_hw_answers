@@ -86,17 +86,17 @@ class CQLCritic(BaseCritic):
         terminal_n = ptu.from_numpy(terminal_n)
 
         # Compute the DQN Loss
-        dqn_loss, qa_t_values, q_t_values = self.dqn_loss(
+        bellman_error, qa_t_values, q_t_values = self.dqn_loss(
             ob_no, ac_na, next_ob_no, reward_n, terminal_n
         )
 
         # CQL Implementation
         # TODO: Implement CQL as described in the pdf and paper
         # Hint: After calculating cql_loss, augment the loss appropriately
-        q_t_logsumexp = torch.logsumexp(qa_t_values, 1)
-        cql_loss = q_t_logsumexp.mean() - q_t_values.mean()
+        q_t_logsumexp = torch.logsumexp(qa_t_values, dim=1)
+        cql_loss = (q_t_logsumexp-q_t_values).mean()
 
-        loss = self.cql_alpha * cql_loss + dqn_loss
+        loss = self.cql_alpha * cql_loss + bellman_error
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -107,7 +107,7 @@ class CQLCritic(BaseCritic):
 
         # TODO: Uncomment these lines after implementing CQL
         info['CQL Loss'] = ptu.to_numpy(cql_loss)
-        info['DQN Loss'] = ptu.to_numpy(dqn_loss)
+        info['DQN Loss'] = ptu.to_numpy(bellman_error)
         info['Data q-values'] = ptu.to_numpy(q_t_values).mean()
         info['OOD q-values'] = ptu.to_numpy(q_t_logsumexp).mean()
 

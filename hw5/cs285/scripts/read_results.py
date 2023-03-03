@@ -57,7 +57,7 @@ def read_log_dir(logdir):
 
 
 if __name__ == '__main__':
-    log_dirs = glob.glob("data/p2-p1/hw5_expl_*")
+    log_dirs = glob.glob("data/p2-p3/hw5_expl_*")
 
     sum = 0
     for logdir in log_dirs:

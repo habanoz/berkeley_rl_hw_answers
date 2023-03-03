@@ -30,9 +30,7 @@ class DiscCountPointmassModel(nn.Module, BaseExplorationModel):
 
         self.count_table[idx0, idx1] += 1
 
-        return {
-            'Training Loss': 0,
-        }
+        return 0.0
 
 
 if __name__ == '__main__':

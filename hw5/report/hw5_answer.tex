@@ -18,51 +18,18 @@
 
     \maketitle
 
-    \section*{Observations}
-
-    \subsection*{Truncated Episodes}
-
-    Episodes have a maximum number of steps limit.
-    An episode termination may be due to reaching the target or maximum number of limits.
-    Provided implementation offers no detail about termination reason.
-
-    If an episode terminates due to maximum step limit, it is said to be truncated.
-    A truncated episode should use bootstrapped next state value in the target calculations.
-    Upon reaching target, the desired termination, target calculations should not boostrap.
-
-    Why this is important?
-    We are already working in the so-called deadly-triad territory.
-    Target calculations should be accurate to not increase the chance of divergence.
-
-    As a solution, the environment is wrapped with a TimeLimit wrapper and truncated episodes are handled accordingly.
-
-    \subsection*{Offline Training Returns}
-
-    At each step, the agent selects an action, using the last observation, from the replay buffer, and steps the environment.
-
-    Once offline training is switched on, data collection is turned off.
-    The last observation in the replay buffer is not updated.
-    The last observation and the actual environment state relation is broken.
-    All the actions taken from that point on are literally blindly taken and observed training performance is a random product.
-
-    It may be easy to fix the problem but may not worth it.
-    Evaluation performance is sufficient and more important.
-    Thus disregarding the training performance in the offline setting seems to be the most suitable action.
-
-    \section*{Remarks}
-
     Each experiment is run using 4 different seeds and their average is displayed.
     Training return is average of the last 100 training step rewards.
     Evaluation return is average of the 1000 evaluation step rewards.
 
-    \section*{Part 1: “Unsupervised” RND and exploration performance}
+    \section{Part 1: “Unsupervised” RND and exploration performance}
 
-    \subsection*{RND Implementation}
+    \subsection{RND Implementation}
 
     Experiments are run using easy, medium and hard environments.
     Relevant notebooks with plots can be found and report package.
 
-    \subsubsection*{Easy Environment}
+    \subsubsection{Easy Environment}
 
     Expectation 1: For debugging this problem, note that on the easy environment we would expect to obtain a mean reward (100 episodes) of -25 within 4000 iterations of online exploitation.
 
@@ -76,151 +43,84 @@
     The chart shows both exploration strategies reach the target mean reward within 14K iterations.
     The RND strategy reaches the target immediately after the beginning of the online exploitation.
 
-    Expectation 2: The density of the state-action pairs on this easy environment is, as expected, more uniformly spread over the reachable parts of the environment (that are not occupied by walls) with RND as compared to random exploration where most of the density would be concentrated around the starting state.
-
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-easy-state-density-random}
-
-    After 10K training steps, state density for the random strategy seems to be concentrated around the starting state and fades away as it moves away from the starting state.
-    This is compatible with the expectation.
-
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-easy-state-density-rnd}
-
-    After 10K training steps, state density for the RND strategy seems to be more uniformly spread over the reachable parts of the environment.
-
-    This is compatible with the expectation.
-
-    However, RND strategy also shows concentrations, especially around top left corner.
-    Why this is the case?
-    After 3K steps, RND values for the reachable parts becomes zero or close to zero, it is not distinguishable by just looking at the plots.
-    After this point exploration critic values tend to diminish.
-    Remaining exploration critic values are not good enough to produce uniform transitions.
-    The agent gets trapped around points where actions have similar exploration bonuses.
-    This is the same situation as random exploration.
-
-    Why the top left corner then?
-    Because it is the only corner in the environment.
-    Why diminishing exploration values favor corners, it is not very clear.
-
-    After the online exploitation starts, state density becomes uniform over time.
-    The difference between the two strategies disappears.
-
-    \subsubsection*{Revisiting raining return}
-
-    RND strategy exploration critic return reaches -30 then drops.
-    The drop can be credited to fading exploration bonuses which is a result of diminished RDN values.
-    Once exploitation starts, RND strategy has a somewhat decent exploitation critic which has been trained for 8K steps.
-    Exploitation and training starts at the same time for the RND strategy.
-    But it catch-ups after roughly 8K steps.
-    In the easy environment RND strategy offers no advantage over the Random strategy.
-
     \hspace*{-0.6in}
     \includegraphics[scale=0.30]{q1/q1-easy-eval-compare}
 
     In terms of evaluation performance, both strategies perform the same.
     Note that random strategy starts learning after 10K steps while RND strategy starts learning after 2K steps.
 
-    \subsubsection*{Medium Environment}
+
+
+    Expectation 2: The density of the state-action pairs on this easy environment is, as expected, more uniformly spread over the reachable parts of the environment (that are not occupied by walls) with RND as compared to random exploration where most of the density would be concentrated around the starting state.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-medium-state-density-random}
+    \includegraphics[scale=0.20]{p1/q1-easy-state-density-random}
+
+    After 10K training steps, state density for the random strategy seems to be concentrated around the starting state and fades away as it moves away from the starting state.
+    This is compatible with the expectation.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-medium-state-density-rnd}
+    \includegraphics[scale=0.20]{p1/q1-easy-state-density-rnd}
 
-    Random strategy generates state densities that are concentrated around the start state.
+    After 10K training steps, state density for the RND strategy seems to be more uniformly spread over the reachable parts of the environment.
+
+    This is compatible with the expectation.
+
+    After the online exploitation starts, state density becomes uniform over time.
+    The difference between the two strategies disappears.
+
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.20]{p1/q1-medium-state-density-random}
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.20]{p1/q1-medium-state-density-rnd}
+
+    Until 10K steps, Random strategy generates state densities that are concentrated around the start state.
     Random strategy states density drops steadily as distance to start state increases.
     This behaviour is expected.
 
     RND strategy is expected to generate more uniform state densities, which seems not to be the case.
-    Even in the early 3K steps, generated state densities suffer from multi-modalities, e.g. there are 2-3 concentration points.
-    This is an indication of a flat exploration critic surface.
+    10K state densities reaches up to 16 for RND strategy in comparison, Random strategy state densities reaches only up to 9.
+    RND does better exploration by reaching the far side of the maze more often.
 
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-medium-exploration-values-rnd}
-
-    Investigating exploration values show that in the beginning center states happen to be assigned lower values.
-    This prevents the agent from exploring further.
+    After the online exploitation starts, state density becomes uniform over time.
+    The difference between the two strategies disappears.
 
     \hspace*{-0.6in}
     \includegraphics[scale=0.30]{q1/q1-medium-train-compare}
 
-    RND strategy agent training average return starts rising after 10K steps, the point where exploiting agent takes on.
-    8K steps training does not seem to pay off.
-    Given the fact that exploration critic values are poor this is not surprising.
-
-    Random strategy agent training average return starts rising after 15K steps.
-    The curve is more steep than the RND curve.
-    Also note that RND starts learning after 2K steps which means it has a 8K steps advantage.
-    If Random strategy training curve started rising after 18K steps, we would argue that they behave similar, but actually by rising after 15K steps random strategy performs better.
-
-    However, around 22K steps, while the gap was about to close, Random training curve takes a hit and levels out.
-    It is only around 50K steps that the Random strategy can catches-up again.
-    This hit is not expected.
-
-    Remember that after exploitation starts both strategies continues with epsilon greedy exploration.
-    So called Random strategy already has a better critic which makes it learn faster.
-    At this point Random agent has nothing to make him perform inferior.
-
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.9]{q1/q1-medium-train-compare-seeds}
-
-    It is necessary to investigate training performance for each seed to understand what actually is going on.
-
-    Please ignore the leading 0 in the plots.
-
-    It turns out one of the Random strategy experiments performs very poorly and impacts the overall average performance values.
-    If the unlucky seed is left out Random strategy average becomes better than the RND.
-
-    This observation can be used to argue that RND strategy is more robust, but there is not enough evidence to support this.
+    RND strategy starts rising faster because it starts learning early.
+    Random strategy then catch-ups.
+    Performance is the same.
 
     \hspace*{-0.6in}
     \includegraphics[scale=0.30]{q1/q1-medium-eval-compare}
 
     Evaluation performance follows the same discussions made for the training performance.
-    One slight difference to note is RND exploitation critic gives rise to evaluation returns after training starts, in comparison to training curve.
 
-    \subsubsection*{Hard Environment}
+    \subsubsection{Hard Environment}
 
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-hard-state-density-random}
-
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-hard-state-density-rnd}
-
-    Random strategy explores only the first room.
-    It fails to reach the other rooms.
-
-    RND strategy has a clear advantage in the hard environment.
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.20]{p1/q1-hard-state-density-random}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-hard-train-10k-merge-traj-random}
+    \includegraphics[scale=0.20]{p1/q1-hard-state-density-rnd}
+
+    State densities follows the same discussions as the medium environment.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-hard-train-10k-merge-traj-rnd}
-
-    Training trajectory images are collected and merged together to generate a density of training trajectories.
-    Only first 10K trajectories are used.
-    Note that this aggregate images are similar to state densities but different in that they add the lines between points as well so that they are more clear and uses a trajectory only once instead of sampling.
-
-    First image belongs to random strategy experiments.
-    The second image belongs to rnd strategy experiments.
-    Exploration superiority of the RND strategy is clear.
+    \includegraphics[scale=0.30]{p1/q1-hard-train-compare}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-hard-train-compare}
+    \includegraphics[scale=0.30]{p1/q1-hard-eval-compare}
 
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-hard-eval-compare}
+    RND strategy performs better.
+    In training, the gap between RND and Random keeps widening.
+    In evaluation, the gap tends to close and random catches the RND by the end of the training.
 
-    Random strategy training performance is poor because it fails to explore properly.
-
-    RND strategy on the other hand makes use of the critic values learned during exploration.
-    The gap between RND and random strategy performances keeps open rather than closing as it was the in case in the previous environments.
-
-
-    \subsection*{Count Based Exploration Implementation}
+    \subsection{Count Based Exploration Implementation}
 
     Target environment is a simple 2D environment.
     A simple count based exploration strategy can be used.
@@ -241,130 +141,211 @@
 
     Count based exploration strategy is referred to as CNT in the following discussions.
 
-    \subsubsection*{Easy Environment}
+    \subsubsection{Easy Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{p1/q1-p2-cnt-easy-train}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-p2-cnt-easy-train}
+    \includegraphics[scale=0.30]{p1/q1-p2-cnt-easy-eval}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-p2-cnt-easy-eval}
+    \includegraphics[scale=0.2]{p1/q1-p2-cnt-easy-state-density}
 
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-p2-cnt-easy-state-density}
-
-    Count based exploration strategy produces more uniform state density.
+    Count based exploration strategy produces more uniform state densities than RND and Random strategies.
     In terms of training and evaluation performance CNT performs similar to RND strategy.
     In the easy environment difference is not distinguishable.
 
-    \subsubsection*{Medium Environment}
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{p1/q1-p2-cnt-medium-train}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-p2-cnt-medium-train}
+    \includegraphics[scale=0.30]{p1/q1-p2-cnt-medium-eval}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-p2-cnt-medium-eval}
+    \includegraphics[scale=0.2]{p1/q1-p2-cnt-medium-state-density}
 
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-p2-cnt-medium-state-density}
-
-    Count based exploration strategy produces far more uniform state density.
+    Count based exploration strategy produces more uniform state densities than RND and Random strategies.
     In terms of training and evaluation performance CNT performs better than RND strategy.
-    Performance difference is a result of exploring better.
+    Performance difference is result of better exploration.
 
+    \subsubsection{Hard Environment}
 
-    \subsubsection*{Hard Environment}
-
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-p2-cnt-hard-train}
-
-    \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-p2-cnt-hard-eval}
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{p1/q1-p2-cnt-hard-train}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.25]{q1/q1-p2-cnt-hard-state-density}
-
-    Count based exploration strategy initially explores better than RND does.
-    At the end, count based exploration RND exploration state densities are similar.
-
-    CNT training performance starts better thanks to better exploration.
-    CNT training performance degrades after exploitation starts.
-    This indicates CNT exploitation critic values are worse that RND exploitation critic values at the beginning of the exploitation.
+    \includegraphics[scale=0.30]{p1/q1-p2-cnt-hard-eval}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-p2-cnt-hard-intrinsic-rewards}
+    \includegraphics[scale=0.2]{p1/q1-p2-cnt-hard-state-density}
 
-    Given the similarity of the generated intrinsic rewards (mixed rewards), it is not clear why CNT critic is worse.
+    Count based exploration strategy generates more uniform 10K state densities than RND.
 
-    At late stages of the exploitation, CNT exploitation critic values improve.
-    Training performance of the CNT catches the RND strategy performance.
-
-    Evaluation performance during exploration also shows that CNT exploitation critic values are worse than RND exploitation critic values.
-    CNT evaluation performance follows training performance and catches RND evaluation performance by the end of the training.
+    CNT training and evaluation performances are better than Random and RND strategy performances.
 
 
-    \section*{Part 2: Offline learning on exploration data}
+    \section{Part 2: Offline learning on exploration data}
+
+    \subsection{DQN vs CQL}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q2-p1-medium-eval-all}
-
-    \subsection*{DQN vs CQL}
+    \includegraphics[scale=0.30]{p2/q2-p1-medium-eval-all}
 
     The chart above shows evaluation return for DQN, Offline DQN and CQL both with bare and transformed (labelled as Shift) rewards.
 
-    \subsubsection*{Bare Rewards}
+    \subsubsection{Bare Rewards}
 
     \hspace*{-0.4in}
-    \includegraphics[scale=0.20]{q1/q2-p1-explt-dqn}
+    \includegraphics[scale=0.20]{p2/q2-p1-explt-dqn}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.20]{q1/q2-p1-explt-off-dqn}
+    \includegraphics[scale=0.20]{p2/q2-p1-explt-off-dqn}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.20]{q1/q2-p1-explt-cql}
+    \includegraphics[scale=0.20]{p2/q2-p1-explt-cql}
 
-    Online DQN works best as expected.
-    It continues collecting new trajectories even after explorations ends.
-    Online DQN has the widest coverage of the state space.
-    As the number of successful trajectories in the buffer increase they occur more often in the training samples.
+    Online DQN is the best performer which is expected.
 
-    Offline DQN performs worst.
-    Once exploration phase is over, collecting new trajectories is stopped.
-    Offline DQN has to rely on the data in the buffer to improve.
-    Unfortunately coverage of the data in the buffer is limited.
-    Trajectories reaching the goal state are very few, and they rarely occur in the training samples.
-    Discounting rewards makes the problem worse.
+    Offline DQN and CQL performs similarly.
+    Their performance is not as good because of the offline settings.
 
-    CQL has the worst performance.
-    CQL suffers from the same problems Offline DQN suffers.
-    CQL is affected more severely.
-    Why?
-    Probably regularization parameters in the objective function makes the cql less stable in the case of inaccurate critic estimates.
+    Does CQL give rise to Q-values that underestimate the Q-values learned via a standard DQN?
+    No.
+    In the exploration phase, agents rarely reaches the target thus the buffer contains few rewards.
+    Few rewards rarely occurs in the samples.
+    Additionally, rewards are discounted which makes the effect of already rare rewards less significant.
 
-    In comparison to the DQN Q values, CQL overestimates Q values in one of the experiments.
-    CQL underestimates Q values in only one of the experiments.
-    CQL is not stable enough to reliably compare Q value estimates with DQN values.
-
-    \subsubsection*{Transformed Rewards}
+    \subsubsection{Transformed Rewards}
 
     As suggested in the homework document rewards are shifted by 1 and scaled by 100.
     This way effects of sparsity and discounting is mitigated.
 
-    Transforming the rewards improves results for all settings.
+    Transforming the rewards improves results for online DQN and CQL.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.20]{q1/q2-p1-explt-dqn-trans}
+    \includegraphics[scale=0.20]{p2/q2-p1-explt-dqn-trans}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.20]{q1/q2-p1-explt-off-dqn-trans}
+    \includegraphics[scale=0.20]{p2/q2-p1-explt-off-dqn-trans}
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.20]{q1/q2-p1-explt-cql-trans}
+    \includegraphics[scale=0.20]{p2/q2-p1-explt-cql-trans}
 
     With the new results it is easier to derive a conclusion.
 
     Offline DQN has a tendency to overestimate Q values.
-    CQL, on the other hand, has a tendency to underestimate Q values.
+    Offline DQN with transformed rewards performs the worst.
 
-    CQL is still the worst performer.
+    CQL, on the other hand, has a tendency to underestimate Q values.
+    With the transformed rewards, CQL performance improves, almost to the level of online DQN.
+
+
+    \subsection{Ablation Study}
+
+    An ablation study on the performance of the offline algorithm as a function of the amount of exploration data is performed.
+    Transformed rewards are used.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{p2-p2/dqn-eval}
+
+    DQN is affected by the number of exploration steps.
+    5000 and 10.000 exploration steps perform worse while 15.000 and 20.000 exploration steps perform better.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{p2-p2/cql-eval}
+
+    CQL performance is not effected by the number of exploration steps, as much.
+
+    \subsection{Alpha Sweep}
+
+    CQL with high or medium alpha values are expected to be better.
+    CQL with minimal alpha is expected to perform worse because it gets closer to DQN.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{p2-p3/medium}
+
+    In the medium environment there is no significant difference.
+
+    \hspace*{-0.6in}
+    \includegraphics[scale=0.30]{p2-p3/hard}
+
+    In the hard environment the difference is more obvious.
+
+    A medium value of 0.5 performs the best among the selected alpha values.
+    A low value of 0.02 performs the worst.
+
+
+    \section{Part 3: “Supervised” exploration with mixed reward bonuses}
+
+    This question is divided into two parts.
+    The first part addresses the original question.
+    The second part is an offline extension to the first part.
+
+    A reward transformation of scale = 100 and shift = 1 is used.
+
+
+    \subsection{“Supervised” exploration with mixed reward bonuses (Online)}
+
+    This section examines the performance of CQL under supervised exploration strategy.
+    In supervised exploration, environment reward and exploration reward are augmented to form a mixed reward.
+
+    \subsubsection{Hard Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q3-online/hard-eval}
+
+    DQN and CQL compared under 3 different settings.
+    In the first setting, 10K exploration steps is used.
+    Results are obtained by averaging 4 runs with 4 different seeds.
+    In the second setting, 20K exploration steps is used.
+    Results are obtained by averaging 8 runs belonging to 4 different seeds.
+    In the third setting, which is subpart 2 of part 2, offline training with unsupervised exploration is done for 20K steps.
+
+    Performance of 20K exploration steps is better than 10K exploration case.
+    DQN and CQL seems to be performing similar under the same settings.
+
+    Benefit of supervised exploration is not visible.
+    CQL with 20K exploration bonuses performs slightly better both in online supervised and offline unsupervised settings.
+    Is this an indication of a problem with mixed rewards implementation?
+    It is not clear.
+
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q3-online/medium-eval}
+
+    The setting is the same with the hard environment case.
+    Only the environment is different.
+
+    Offline DQN with 20K unsupervised exploration performs worse for some time.
+    Being offline it is expected.
+    Other settings performs similarly with no obvious difference.
+
+    Where is the benefit of supervised exploration?
+    It is not seen.
+
+    \subsection{“Supervised” exploration with mixed reward bonuses (Offline)}
+
+    CQL is an offline algorithm.
+    It is more meaningful to compare CQL and DQN under offline settings.
+
+    \subsubsection{Hard Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q3-offline/hard-eval}
+
+    Unsupervised offline strategy seems to be better in CQL and DQN case which is not expected.
+    Does supervised exploration make things worse?
+
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q3-offline/medium-eval}
+
+    There is not significant difference conclude.
+    But again supervised exploration shows no improvement.
 
 \end{document}

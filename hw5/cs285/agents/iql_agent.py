@@ -73,6 +73,7 @@ class IQLAgent(DQNAgent):
         if self.t > self.num_exploration_steps:
             # TODO: After exploration is over, set the actor to optimize the extrinsic critic
             #HINT: Look at method ArgMaxPolicy.set_critic
+            self.actor.set_critic(self.exploitation_critic)
 
         if (self.t > self.learning_starts
                 and self.t % self.learning_freq == 0

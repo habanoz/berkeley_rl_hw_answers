@@ -38,13 +38,13 @@
     We are required to reach a mean reward of -25 within 14K iterations.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-easy-train-compare}
+    \includegraphics[scale=0.30]{p1/q1-easy-train-compare}
 
     The chart shows both exploration strategies reach the target mean reward within 14K iterations.
     The RND strategy reaches the target immediately after the beginning of the online exploitation.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-easy-eval-compare}
+    \includegraphics[scale=0.30]{p1/q1-easy-eval-compare}
 
     In terms of evaluation performance, both strategies perform the same.
     Note that random strategy starts learning after 10K steps while RND strategy starts learning after 2K steps.
@@ -89,14 +89,14 @@
     The difference between the two strategies disappears.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-medium-train-compare}
+    \includegraphics[scale=0.30]{p1/q1-medium-train-compare}
 
     RND strategy starts rising faster because it starts learning early.
     Random strategy then catch-ups.
     Performance is the same.
 
     \hspace*{-0.6in}
-    \includegraphics[scale=0.30]{q1/q1-medium-eval-compare}
+    \includegraphics[scale=0.30]{p1/q1-medium-eval-compare}
 
     Evaluation performance follows the same discussions made for the training performance.
 
@@ -347,5 +347,68 @@
 
     There is not significant difference conclude.
     But again supervised exploration shows no improvement.
+
+
+    \section{Part 4: Offline Learning with AWAC}
+
+    AWAC is tested in online settings only.
+    Offline setting is not included in the question.
+
+    Unsupervised and supervised explorations are tested separately.
+
+    \subsection{Unsupervised}
+
+    \subsubsection{Easy Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q4/eval-easy-unsupervised}
+
+    In the easy environment there is no significant different among different $\lambda$ values.
+
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q4/eval-medium-unsupervised}
+
+    In the medium environment it is not possible to conclude on the effect of the $ \lambda $ value.
+
+    $\lambda$ 20 and $\lambda$ 2 performs best.
+    In a consistent setting $\lambda$ 10 is expected to perform similarly, but it does not.
+
+    $\lambda$ 50 performs worst.
+    Maybe it is too big for the environment.
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q4/eval-medium-unsupervised-compared}
+
+    The best performing AWAC setting is compared to previously studied algorithms.
+    AWAC is found to be the worst performer.
+    AWAC is even worse than offline DQN!!!
+
+    \subsection{Supervised}
+
+    \subsubsection{Easy Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q4/eval-easy-supervised}
+
+    In the easy environment there is no significant different among different $\lambda$ values.
+
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q4/eval-medium-supervised}
+
+    In the medium environment $ \lambda $ 10 performs best.
+    Greater and lower $\lambda$ values performs worse.
+
+    In the end all of them reaches to similar return levels.
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q4/eval-medium-supervised-compared}
+
+    AWAC is compared to DQN and CQL in similar settings.
+    It is found to be the worst performer.
+
 
 \end{document}

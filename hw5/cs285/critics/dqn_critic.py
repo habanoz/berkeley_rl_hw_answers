@@ -1,3 +1,5 @@
+import numpy as np
+
 from .base_critic import BaseCritic
 import torch
 import torch.optim as optim
@@ -96,6 +98,7 @@ class DQNCritic(BaseCritic):
             target_param.data.copy_(param.data)
 
     def qa_values(self, obs):
-        obs = ptu.from_numpy(obs)
+        if isinstance(obs, np.ndarray):
+            obs = ptu.from_numpy(obs)
         qa_values = self.q_net(obs)
         return ptu.to_numpy(qa_values)

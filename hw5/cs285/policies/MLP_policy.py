@@ -3,7 +3,7 @@ import itertools
 from torch import nn
 from torch.nn import functional as F
 from torch import optim
-
+import pdb
 import numpy as np
 import torch
 from torch import distributions
@@ -172,7 +172,7 @@ class MLPPolicyAWAC(MLPPolicy):
         # TODO update the policy network utilizing AWAC update
         weight_n = ((1/self.lambda_awac) * adv_n).exp()
         likelihood_n = self(observations).log_prob(actions)
-        actor_loss = -(likelihood_n * weight_n).mean()
+        actor_loss = -(likelihood_n.squeeze() * weight_n.squeeze()).mean()
 
         self.optimizer.zero_grad()
         actor_loss.backward()

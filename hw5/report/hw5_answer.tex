@@ -363,7 +363,7 @@
     \hspace*{-0.3in}
     \includegraphics[scale=0.30]{q4/eval-easy-unsupervised}
 
-    In the easy environment there is no significant different among different $\lambda$ values.
+    In the easy environment there is no significant difference among different $\lambda$ values.
 
     \subsubsection{Medium Environment}
 
@@ -392,7 +392,7 @@
     \hspace*{-0.3in}
     \includegraphics[scale=0.30]{q4/eval-easy-supervised}
 
-    In the easy environment there is no significant different among different $\lambda$ values.
+    In the easy environment there is no significant difference among different $\lambda$ values.
 
     \subsubsection{Medium Environment}
 
@@ -410,5 +410,69 @@
     AWAC is compared to DQN and CQL in similar settings.
     It is found to be the worst performer.
 
+
+
+    \section{Part 5: Offline Learning with IQL}
+
+    IQL is tested in online settings only.
+    Offline setting is not included in the question.
+
+    Unsupervised and supervised explorations are tested separately.
+
+    \subsection{Unsupervised}
+
+    For easy environment AWAC lambda value is 10.
+    For medium environment AWAC lambda value is 20.
+
+    \subsubsection{Easy Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q5/eval-easy-unsupervised}
+
+    In the easy environment there is no significant difference among different $\tau$ values.
+
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q5/eval-medium-unsupervised}
+
+    In the medium environment higher $\tau$ values are tend to be better.
+    $\tau$ 0.99 and $\tau$ 0.8 behaves exceptionally.
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q5/eval-medium-unsupervised-compared}
+
+    The best performing IQL setting is compared to previously studied algorithms.
+    IQL is found to perform similar to AWAC which is even worse than offline DQN!!!
+
+    IQL was expected to perform better than AWAC and Offline DQN.
+
+    \subsection{Supervised}
+
+    Preferred $\tau$ value is 10.
+
+    \subsubsection{Easy Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q5/eval-easy-supervised}
+
+    In the easy environment there is no significant difference among different $\tau$ values.
+
+    \subsubsection{Medium Environment}
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q5/eval-medium-supervised}
+
+    In the medium environment higher $\tau$ values tend to perform better.
+    $\tau$ values 0.5, 0.6 and 0.7 clusters at the lower end of the plot.
+    $\tau$ values 0.9 and 0.95 performs better than any other.
+
+    \hspace*{-0.3in}
+    \includegraphics[scale=0.30]{q5/eval-medium-supervised-compared}
+
+    IQL is compared to other algorithms in similar settings.
+    It is found to be perfoming similar to AWAC.
+
+    IQL was expected to perform better than AWAC.
 
 \end{document}

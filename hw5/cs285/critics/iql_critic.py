@@ -8,6 +8,7 @@ import numpy as np
 
 from cs285.infrastructure import pytorch_util as ptu
 
+
 class IQLCritic(BaseCritic):
 
     def __init__(self, hparams, optimizer_spec, **kwargs):
@@ -41,17 +42,18 @@ class IQLCritic(BaseCritic):
         self.mse_loss = nn.MSELoss()
         self.q_net.to(ptu.device)
         self.q_net_target.to(ptu.device)
-        
+
         # TODO define value function
         # HINT: see Q_net definition above and optimizer below
         ### YOUR CODE HERE ###
-        self.v_net = None
+        self.v_net = network_initializer(self.ob_dim, 1)
+        self.v_net.to(ptu.device)
 
         self.v_optimizer = self.optimizer_spec.constructor(
             self.v_net.parameters(),
             **self.optimizer_spec.optim_kwargs
         )
-        self.learning_rate_scheduler_v  = optim.lr_scheduler.LambdaLR(
+        self.learning_rate_scheduler_v = optim.lr_scheduler.LambdaLR(
             self.v_optimizer,
             self.optimizer_spec.learning_rate_schedule,
         )
@@ -61,7 +63,9 @@ class IQLCritic(BaseCritic):
         """
         Implement expectile loss on the difference between q and v
         """
-        pass
+        loss = diff.square() * (self.iql_expectile - (diff < 0).type(torch.int)).abs()
+
+        return loss.mean()
 
     def update_v(self, ob_no, ac_na):
         """
@@ -69,11 +73,13 @@ class IQLCritic(BaseCritic):
         """
         ob_no = ptu.from_numpy(ob_no)
         ac_na = ptu.from_numpy(ac_na).to(torch.long)
-        
 
         ### YOUR CODE HERE ###
-        value_loss = None
-        
+        v = self.v_net(ob_no).squeeze(1)
+        qa_t_values = self.q_net_target(ob_no).detach()
+        q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
+        value_loss = self.expectile_loss(q_t_values - v)
+
         assert value_loss.shape == ()
         self.v_optimizer.zero_grad()
         value_loss.backward()
@@ -82,7 +88,6 @@ class IQLCritic(BaseCritic):
         self.learning_rate_scheduler_v.step()
 
         return {'Training V Loss': ptu.to_numpy(value_loss)}
-
 
     def update_q(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
         """
@@ -93,9 +98,14 @@ class IQLCritic(BaseCritic):
         next_ob_no = ptu.from_numpy(next_ob_no)
         reward_n = ptu.from_numpy(reward_n)
         terminal_n = ptu.from_numpy(terminal_n)
-        
+
         ### YOUR CODE HERE ###
-        loss = None
+        target = reward_n + self.gamma * self.v_net(next_ob_no).detach().squeeze(1) * (1 - terminal_n)
+
+        qa_t_values = self.q_net(ob_no)
+        q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
+
+        loss = self.mse_loss(q_t_values, target)
 
         assert loss.shape == ()
         self.optimizer.zero_grad()
